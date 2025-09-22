@@ -8,11 +8,15 @@ editor: visual
 
 The following function is to query the Public Use Microdata Sample (PUMS) Census API.
 
-Features of this function include: 
--  Allows user to choose the year of survey (2022 as default). 
--  Checks that a valid value was give for the year (between 2010 and 2022). 
--  Allows the user to specify the numeric variables (AGEP and PWGTP as default, with PWGTP always being returned). 
--  Allows the user to specify the categorical variables (SEX as default). 
+Features of this function include:
+
+-   Allows user to choose the year of survey (2022 as default).
+
+-   Checks that a valid value was give for the year (between 2010 and 2022).
+
+-   Allows the user to specify the numeric variables (AGEP and PWGTP as default, with PWGTP always being returned).
+
+-   Allows the user to specify the categorical variables (SEX as default).
 
 ```{r}
 library(DBI)
