@@ -1,0 +1,39 @@
+---
+title: "Project1_Group14"
+format: html
+editor: visual
+---
+
+## Query API Function
+
+The following function is to query the Public Use Microdata Sample (PUMS) Census API.
+
+Features of this function include: 
+-  Allows user to choose the year of survey (2022 as default). 
+-  Checks that a valid value was give for the year (between 2010 and 2022). 
+-  Allows the user to specify the numeric variables (AGEP and PWGTP as default, with PWGTP always being returned). 
+-  Allows the user to specify the categorical variables (SEX as default). 
+
+```{r}
+library(DBI)
+library(dplyr)
+library(jsonlite)
+
+census_data_function <- function(year = 2022, numeric = "AGEP", categorical = "SEX") {
+  if(year < 2010 | year > 2023) {stop()}
+  url_census <- paste0("https://api.census.gov/data/", year, "/acs/acs1/pums?get=", 
+                       numeric,",",categorical,",PWGTP") 
+  census_stats <- httr::GET(url_census)
+  parsed_census <- fromJSON(rawToChar(census_stats$content))
+  census_data <- as_tibble(parsed_census)
+  census_data <- `colnames<-`(census_data, census_data[1,])
+  census_data <- census_data[-1,]
+  census_data
+}
+```
+
+Test function.
+
+```{r}
+census_data_function()
+```
