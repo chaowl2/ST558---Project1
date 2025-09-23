@@ -25,18 +25,19 @@ library(DBI)
 library(dplyr)
 library(jsonlite)
 
-census_data_function <- function(year = 2022, numeric = "AGEP", categorical = "SEX", 
+census_data_function <- function(year = 2022, num_var = "AGEP", cat_var = "SEX", 
                                  state = 13) {
   if(year < 2010 | year > 2023) {stop()}
-  url_census <- paste0("https://api.census.gov/data/", year, "/acs/acs1/pums?get=", 
-                       numeric,",",categorical,",ST,PWGTP") 
+  url_census <- paste0("https://api.census.gov/data/", year, 
+                       "/acs/acs1/pums?get=AGEP,GASP,GRPIP,JWAP,JWDP,JWMNP,PWGTP,SEX,FER,HHL,HISPEED,JWTRNS,SCH,SCHL,ST") 
   census_stats <- httr::GET(url_census)
   parsed_census <- fromJSON(rawToChar(census_stats$content))
   census_data <- as_tibble(parsed_census)
   census_data <- `colnames<-`(census_data, census_data[1,])
   census_data <- census_data[-1,]
   census_data |>
-    filter(ST == state)
+    filter(ST == state) |>
+    select(PWGTP, num_var, cat_var)
 }
 ```
 
