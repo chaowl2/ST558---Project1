@@ -27,7 +27,7 @@ library(DBI)
 library(dplyr)
 library(jsonlite)
 
-census_data_function <- function(year = 2022, num_var = "AGEP", cat_var = "SEX", 
+query_census_api <- function(year = 2022, num_var = "AGEP", cat_var = "SEX", 
                                  state = 37) {
   if(year < 2010 | year > 2023) {stop("Invalid Year")}
   if(!(num_var %in% c("AGEP", "GASP", "GRPIP", "JWAP", "JWAP", "JWDP", "JWMNP"))) 
@@ -50,5 +50,5 @@ census_data_function <- function(year = 2022, num_var = "AGEP", cat_var = "SEX",
 Test function.
 
 ```{r}
-census_data_function()
+query_census_api()
 ```
