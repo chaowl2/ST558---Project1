@@ -20,6 +20,8 @@ Features of this function include:
 
 -   Allows the user to filter by State (37 is the current default).
 
+-   Checks that the numeric and categorical variables specified are in the list of variables of interest.
+
 ```{r}
 library(DBI)
 library(dplyr)
@@ -28,6 +30,10 @@ library(jsonlite)
 census_data_function <- function(year = 2022, num_var = "AGEP", cat_var = "SEX", 
                                  state = 37) {
   if(year < 2010 | year > 2023) {stop("Invalid Year")}
+  if(!(num_var %in% c("AGEP", "GASP", "GRPIP", "JWAP", "JWAP", "JWDP", "JWMNP"))) 
+    {stop("Invalid Numeric Variable")}
+  if(!(cat_var %in% c("FER", "HHL", "HISPEED", "JWTRNS", "SCH", "SCHL", "SEX"))) 
+    {stop("Invalid Categorical Variable")}
   url_census <- paste0("https://api.census.gov/data/", year, 
                        "/acs/acs1/pums?get=AGEP,GASP,GRPIP,JWAP,JWDP,JWMNP,PWGTP,SEX,FER,HHL,HISPEED,JWTRNS,SCH,SCHL,ST") 
   census_stats <- httr::GET(url_census)
