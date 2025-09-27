@@ -8,7 +8,21 @@ editor: visual
 
 The following function is to query the Public Use Microdata Sample (PUMS) Census API.
 
-Features of this function include:
+But first, we need to define the values for codes in the JWAP and JWDP variables. 
+
+```{r}
+URL_jwap_code <- "https://api.census.gov/data/2022/acs/acs1/pums/variables/JWAP.json"
+jwap_code_returns <- httr::GET(URL_jwap_code)
+parsed_jwap_code <- fromJSON(rawToChar(jwap_code_returns$content))
+jwap_code <- as.list(parsed_jwap_code$values$item)
+
+URL_jwdp_code <- "https://api.census.gov/data/2022/acs/acs1/pums/variables/JWDP.json"
+jwdp_code_returns <- httr::GET(URL_jwdp_code)
+parsed_jwdp_code <- fromJSON(rawToChar(jwdp_code_returns$content))
+jwdp_code <- as.list(parsed_jwdp_code$values$item)
+```
+
+Features of the function include:
 
 -   Allows user to choose the year of survey (2022 as default).
 
@@ -28,6 +42,7 @@ Features of this function include:
 library(DBI)
 library(dplyr)
 library(jsonlite)
+library(lubridate)
 
 query_census_api <- function(year = 2022, 
                              num_var = "AGEP", 
@@ -58,7 +73,7 @@ query_census_api <- function(year = 2022,
 Test function.
 
 ```{r}
-query_census_api(num_var = c("AGEP", "GASP"))
+query_census_api(num_var = c("AGEP", "GASP", "JWAP", "JWDP", "JWMNP"))
 ```
 
 
