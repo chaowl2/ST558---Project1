@@ -22,6 +22,8 @@ Features of this function include:
 
 -   Checks that the numeric and categorical variables specified are in the list of variables of interest.
 
+-   Checks that a valid geography level was given.
+
 ```{r}
 library(DBI)
 library(dplyr)
@@ -37,6 +39,8 @@ query_census_api <- function(year = 2022,
     {stop("Invalid Numeric Variable")}
   if(!(cat_var %in% c("FER", "HHL", "HISPEED", "JWTRNS", "SCH", "SCHL", "SEX"))) 
     {stop("Invalid Categorical Variable")}
+  if(!(geography %in% c("state", "division", "region"))) 
+    {stop("Invalid Geography Level")}
   url_census <- paste0("https://api.census.gov/data/", year, 
                        "/acs/acs1/pums?get=AGEP,GASP,GRPIP,JWAP,JWDP,JWMNP,PWGTP,SEX,FER,HHL,HISPEED,JWTRNS,SCH,SCHL&for=", geography, ":", geo_code) 
   census_stats <- httr::GET(url_census)
