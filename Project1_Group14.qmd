@@ -12,13 +12,13 @@ Features of this function include:
 
 -   Allows user to choose the year of survey (2022 as default).
 
--   Checks that a valid value was give for the year (between 2010 and 2022).
-
 -   Allows the user to specify the numeric variables (AGEP and PWGTP as default, with PWGTP always being returned).
 
 -   Allows the user to specify the categorical variables (SEX as default).
 
--   Allows the user to filter by State (37 is the current default).
+-   Allows the user to specify the geography level (state, division, region with state being the default) and the geography code (37 is the current default).
+
+-   Checks that a valid value was give for the year (between 2010 and 2022).
 
 -   Checks that the numeric and categorical variables specified are in the list of variables of interest.
 
@@ -27,23 +27,25 @@ library(DBI)
 library(dplyr)
 library(jsonlite)
 
-query_census_api <- function(year = 2022, num_var = "AGEP", cat_var = "SEX", 
-                                 state = 37) {
+query_census_api <- function(year = 2022, 
+                             num_var = "AGEP", 
+                             cat_var = "SEX", 
+                             geography = "state", 
+                             geo_code = "37") {
   if(year < 2010 | year > 2023) {stop("Invalid Year")}
   if(!(num_var %in% c("AGEP", "GASP", "GRPIP", "JWAP", "JWAP", "JWDP", "JWMNP"))) 
     {stop("Invalid Numeric Variable")}
   if(!(cat_var %in% c("FER", "HHL", "HISPEED", "JWTRNS", "SCH", "SCHL", "SEX"))) 
     {stop("Invalid Categorical Variable")}
   url_census <- paste0("https://api.census.gov/data/", year, 
-                       "/acs/acs1/pums?get=AGEP,GASP,GRPIP,JWAP,JWDP,JWMNP,PWGTP,SEX,FER,HHL,HISPEED,JWTRNS,SCH,SCHL,ST") 
+                       "/acs/acs1/pums?get=AGEP,GASP,GRPIP,JWAP,JWDP,JWMNP,PWGTP,SEX,FER,HHL,HISPEED,JWTRNS,SCH,SCHL&for=", geography, ":", geo_code) 
   census_stats <- httr::GET(url_census)
   parsed_census <- fromJSON(rawToChar(census_stats$content))
   census_data <- as_tibble(parsed_census)
   census_data <- `colnames<-`(census_data, census_data[1,])
   census_data <- census_data[-1,]
   census_data |>
-    filter(ST == state) |>
-    select(PWGTP, num_var, cat_var)
+    select(PWGTP, num_var, cat_var, geography)
 }
 ```
 
@@ -52,3 +54,8 @@ Test function.
 ```{r}
 query_census_api()
 ```
+
+
+
+
+
