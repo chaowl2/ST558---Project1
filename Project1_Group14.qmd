@@ -20,6 +20,7 @@ URL_jwdp_code <- "https://api.census.gov/data/2022/acs/acs1/pums/variables/JWDP.
 jwdp_code_returns <- httr::GET(URL_jwdp_code)
 parsed_jwdp_code <- fromJSON(rawToChar(jwdp_code_returns$content))
 jwdp_code <- as.list(parsed_jwdp_code$values$item)
+
 ```
 
 Features of the function include:
@@ -65,7 +66,9 @@ query_census_api <- function(year = 2022,
   census_data <- census_data[-1,]
   census_data |>
     transform(AGEP = as.numeric(AGEP), GASP = as.numeric(GASP), GRPIP = 
-                as.numeric(GRPIP), JWMNP = as.numeric(JWMNP)) |>
+              as.numeric(GRPIP), JWMNP = as.numeric(JWMNP), 
+              JWAP = as.character(jwap_code[JWAP]), JWDP = 
+              as.character(jwdp_code[JWDP]))|>
     select(PWGTP, num_var, cat_var, geography) 
 }
 ```
