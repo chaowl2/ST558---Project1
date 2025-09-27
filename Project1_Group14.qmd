@@ -35,9 +35,9 @@ query_census_api <- function(year = 2022,
                              geography = "state", 
                              geo_code = "37") {
   if(year < 2010 | year > 2023) {stop("Invalid Year")}
-  if(!(num_var %in% c("AGEP", "GASP", "GRPIP", "JWAP", "JWAP", "JWDP", "JWMNP"))) 
+  if(!all(num_var %in% c("AGEP", "GASP", "GRPIP", "JWAP", "JWDP", "JWMNP"))) 
     {stop("Invalid Numeric Variable")}
-  if(!(cat_var %in% c("FER", "HHL", "HISPEED", "JWTRNS", "SCH", "SCHL", "SEX"))) 
+  if(!all(cat_var %in% c("FER", "HHL", "HISPEED", "JWTRNS", "SCH", "SCHL", "SEX"))) 
     {stop("Invalid Categorical Variable")}
   if(!(geography %in% c("state", "division", "region"))) 
     {stop("Invalid Geography Level")}
@@ -49,17 +49,25 @@ query_census_api <- function(year = 2022,
   census_data <- `colnames<-`(census_data, census_data[1,])
   census_data <- census_data[-1,]
   census_data |>
-    select(PWGTP, num_var, cat_var, geography)
+    transform(AGEP = as.numeric(AGEP), GASP = as.numeric(GASP), GRPIP = 
+                as.numeric(GRPIP), JWMNP = as.numeric(JWMNP)) |>
+    select(PWGTP, num_var, cat_var, geography) 
 }
 ```
 
 Test function.
 
 ```{r}
-query_census_api()
+query_census_api(num_var = c("AGEP", "GASP"))
 ```
 
 
+The following function is to use the `query_census_api` function to query the Census API for multiple survey years.
+```{r}
+query_multiyear_census <- function() {
+  query_census_api(year = i)
 
+}
+```
 
 
