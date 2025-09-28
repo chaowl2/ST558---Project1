@@ -8,17 +8,17 @@ editor: visual
 
 The following function is to query the Public Use Microdata Sample (PUMS) Census API.
 
-But first, we need to define the values for codes in the JWAP and JWDP variables. 
+But first, we need to define the values for codes in the JWAP and JWDP variables.
 
 ```{r}
 URL_jwap_code <- "https://api.census.gov/data/2022/acs/acs1/pums/variables/JWAP.json"
 jwap_code_returns <- httr::GET(URL_jwap_code)
-parsed_jwap_code <- fromJSON(rawToChar(jwap_code_returns$content))
+parsed_jwap_code <- jsonlite::fromJSON(rawToChar(jwap_code_returns$content))
 jwap_code <- as.list(parsed_jwap_code$values$item)
 
 URL_jwdp_code <- "https://api.census.gov/data/2022/acs/acs1/pums/variables/JWDP.json"
 jwdp_code_returns <- httr::GET(URL_jwdp_code)
-parsed_jwdp_code <- fromJSON(rawToChar(jwdp_code_returns$content))
+parsed_jwdp_code <- jsonlite::fromJSON(rawToChar(jwdp_code_returns$content))
 jwdp_code <- as.list(parsed_jwdp_code$values$item)
 
 ```
@@ -79,13 +79,19 @@ Test function.
 query_census_api(num_var = c("AGEP", "GASP", "JWAP", "JWDP", "JWMNP"))
 ```
 
-
 The following function is to use the `query_census_api` function to query the Census API for multiple survey years.
+
 ```{r}
-query_multiyear_census <- function() {
-  query_census_api(year = i)
-
+query_multiyear_census <- function(census_years, 
+                                   num_var = "AGEP",
+                                   cat_var = "SEX", 
+                                   geography = "state",
+                                   geo_code = "37") {
+  for (i in seq_along(census_years)){
+    query_census_api(year = census_years[i])
+  }
+  
 }
+
+query_multiyear_census(census_years = c("2019", "2022"))
 ```
-
-
