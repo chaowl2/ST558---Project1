@@ -264,13 +264,6 @@ query_census_api(num_var = c("AGEP", "GASP", "JWAP", "JWDP", "JWMNP"))
 The following function is to use the `query_census_api` function to query the Census API for multiple survey years.
 
 ```{r}
-
-query_multiyear_census <- function() {
-  query_census_api(year = i)
-
-The following function is to use the `query_census_api` function to query the Census API for multiple survey years.
-
-```{r}
 query_multiyear_census <- function(census_years, 
                                    num_var = "AGEP",
                                    cat_var = "SEX", 
@@ -288,3 +281,5 @@ combined_df
 
 # Example
 df1 <- query_multiyear_census(census_years = c("2019", "2022"))
+df1
+```
