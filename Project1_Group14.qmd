@@ -7,8 +7,19 @@ editor: visual
 ## Query API Function
 
 The following function is to query the Public Use Microdata Sample (PUMS) Census API.
-
 But first, we need to define the values for codes in the JWAP and JWDP variables.
+
+
+```{r}
+library(DBI)
+library(dplyr)
+library(jsonlite)
+library(lubridate)
+library(tibble)
+library(httr)
+library(stringr)
+
+```
 
 ```{r}
 URL_jwap_code <- "https://api.census.gov/data/2022/acs/acs1/pums/variables/JWAP.json"
@@ -40,35 +51,204 @@ Features of the function include:
 -   Checks that a valid geography level was given.
 
 ```{r}
-library(DBI)
-library(dplyr)
-library(jsonlite)
-library(lubridate)
-
+# Write a function to query the API that allows the user to change the following items
 query_census_api <- function(year = 2022, 
                              num_var = "AGEP", 
                              cat_var = "SEX", 
                              geography = "state", 
                              geo_code = "37") {
-  if(year < 2010 | year > 2023) {stop("Invalid Year")}
-  if(!all(num_var %in% c("AGEP", "GASP", "GRPIP", "JWAP", "JWDP", "JWMNP"))) 
-    {stop("Invalid Numeric Variable")}
-  if(!all(cat_var %in% c("FER", "HHL", "HISPEED", "JWTRNS", "SCH", "SCHL", "SEX"))) 
-    {stop("Invalid Categorical Variable")}
-  if(!(geography %in% c("state", "division", "region"))) 
-    {stop("Invalid Geography Level")}
-  url_census <- paste0("https://api.census.gov/data/", year, 
-                       "/acs/acs1/pums?get=AGEP,GASP,GRPIP,JWAP,JWDP,JWMNP,PWGTP,SEX,FER,HHL,HISPEED,JWTRNS,SCH,SCHL&for=", geography, ":", geo_code) 
-  census_stats <- httr::GET(url_census)
-  parsed_census <- fromJSON(rawToChar(census_stats$content))
-  census_data <- as_tibble(parsed_census)
-  census_data <- `colnames<-`(census_data, census_data[1,])
-  census_data <- census_data[-1,]
+  
+  NUM_ALLOWED <- c("AGEP","GASP","GRPIP","JWAP","JWDP","JWMNP")
+  CAT_ALLOWED <- c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX")
+  
+# This function converts a 12-hour time to minutes after midnight.
+.time_to_minutes <- function(x) {
+    x <- tolower(trimws(x))
+    if (x %in% c("null","n/a","na","")) return(NA_real_)
+    m <- stringr::str_match(x, "^(\\d{1,2}):(\\d{2})\\s*([ap])\\.m\\.$")
+    if (is.na(m[1,1])) return(NA_real_)
+    hh <- as.numeric(m[1,2]); mm <- as.numeric(m[1,3]); ap <- m[1,4]
+    if (ap == "a" && hh == 12) hh <- 0
+    if (ap == "p" && hh != 12) hh <- hh + 12
+    hh*60 + mm
+}
+  
+  # THis function labels a single time or range to midpoint minutes
+  label_time_midpoint_minutes <- function(lbl) {
+    if (is.na(lbl)) return(NA_real_)
+    s <- tolower(trimws(lbl))
+    if (startsWith(s, "n/a") || s == "null") return(NA_real_)
+    rng <- stringr::str_match(s, "^(.+?)\\s+to\\s+(.+)$")
+    if (!is.na(rng[1,1])) {
+      t1 <- .time_to_minutes(trimws(rng[1,2]))
+      t2 <- .time_to_minutes(trimws(rng[1,3]))
+      return(mean(c(t1, t2), na.rm = TRUE))
+    }
+    .time_to_minutes(s)
+  }
+  
+# This function Formats minutes-after-midnight as a 12-hour time label.
+minutes_to_ampm <- function(m) {
+  if (is.na(m)) return(NA_character_)
+  m_round <- as.integer(round(m))      # ensure whole minutes
+  h       <- (m_round %/% 60) %% 24    # 0–23
+  mm      <- m_round %% 60             # 0–59 (integer)
+
+  ap  <- if (h >= 12) "p.m." else "a.m."
+  h12 <- h %% 12
+  if (h12 == 0) h12 <- 12
+
+  sprintf("%d:%02d %s", h12, mm, ap)
+}
+
+  # get code/label dictionary for a var
+  get_var_dictionary <- function(year, var) {
+    url <- sprintf("https://api.census.gov/data/%d/acs/acs1/pums/variables/%s.json", year, var)
+    resp <- httr::GET(url)
+    if (httr::http_error(resp)) stop("Failed to fetch dictionary for: ", var)
+    js <- jsonlite::fromJSON(rawToChar(resp$content), simplifyVector = FALSE)
+    vals <- js$values
+    if (is.null(vals)) return(data.frame(code=character(), label=character()))
+    if (!is.null(vals$index) && !is.null(vals$item)) {
+      codes  <- as.character(unlist(vals$index, use.names = FALSE))
+      labels <- as.character(unlist(vals$item,  use.names = FALSE))
+      if (length(codes) != length(labels)) {
+        nm <- names(vals$item)
+        if (!is.null(nm) && length(nm) == length(labels)) codes <- nm else
+          return(data.frame(code=character(), label=character()))
+      }
+      return(data.frame(code=codes, label=labels, check.names = FALSE))
+    }
+    if (!is.null(vals$item)) {
+      labels <- as.character(unlist(vals$item, use.names = TRUE))
+      codes  <- names(vals$item); if (is.null(codes)) codes <- as.character(seq_along(labels))
+      return(data.frame(code=codes, label=labels, check.names = FALSE))
+    }
+    data.frame(code=character(), label=character())
+  }
+
+  # This functions keeps null characters as null and changes non null characters to 3 characters
+  normalize_code <- function(x) {
+  x_chr     <- trimws(as.character(x))
+  is_missing <- is.na(x) | x_chr == ""
+  is_null    <- toupper(x_chr) == "NULL"
+
+  out <- x_chr
+  out[!(is_missing | is_null)] <- stringr::str_pad(out[!(is_missing | is_null)], width = 3, pad = "0")
+  out[is_null]    <- "NULL"
+  out[is_missing] <- NA_character_
+  out
+  }
+  
+  # This function returns TRUE if the lowercased input contains the substrings "a.m." or "p.m."
+  is_label_string <- function(x) grepl("(a\\.m\\.|p\\.m\\.)", tolower(x))
+  
+  # Validations
+  if (year < 2010 | year > 2022) stop("Invalid Year")
+  
+  if (!all(num_var %in% NUM_ALLOWED)) stop("Invalid Numeric Variable")
+  
+  if (!all(cat_var %in% CAT_ALLOWED)) stop("Invalid Categorical Variable")
+  
+  if (!(tolower(geography) %in% c("all","state","division","region"))) {
+    stop("Invalid Geography Level")
+  }
+  
+  if (length(setdiff(num_var, "PWGTP")) < 1L) {
+    stop("You must request at least one numeric variable other than PWGTP.")
+  }
+  if (length(cat_var) < 1L) {
+    stop("You must request at least one categorical variable.")
+  }
+  
+# Build URL
+  get_vars   <- unique(c("PWGTP", num_var, cat_var))
+  get_clause <- paste(get_vars, collapse = ",")
+  
+  geography <- tolower(geography)
+  for_clause <- switch(
+    geography,
+    "all"      = "",
+    "state"    = paste0("&for=state:", geo_code),
+    "division" = paste0("&for=division:", geo_code),
+    "region"   = paste0("&for=region:", geo_code)
+  )
+  geo_col <- switch(
+    geography,
+    "all" = NULL, "state" = "state", "division" = "division", "region" = "region"
+  )
+  
+  url_census <- paste0("https://api.census.gov/data/", year,
+                       "/acs/acs1/pums?get=", get_clause, for_clause)
+  
+  #  Request and parse
+  census_stats   <- httr::GET(url_census)
+  if (httr::http_error(census_stats)) stop("API request failed: ", url_census)
+  
+  parsed_census  <- jsonlite::fromJSON(rawToChar(census_stats$content))
+  census_data    <- tibble::as_tibble(parsed_census)
+  census_data    <- `colnames<-`(census_data, census_data[1,])
+  census_data    <- census_data[-1,]
+  
+  # Coercions
+  if ("PWGTP" %in% names(census_data)) {
+    census_data$PWGTP <- suppressWarnings(as.numeric(census_data$PWGTP))
+  }
+  simple_numeric <- setdiff(intersect(num_var, names(census_data)), c("JWAP","JWDP"))
+  for (v in simple_numeric) {
+    census_data[[v]] <- suppressWarnings(as.numeric(census_data[[v]]))
+  }
+  
+  normalize_code <- function(x) {
+    x <- trimws(as.character(x))
+    is_null <- toupper(x) == "NULL"
+    x[!is_null] <- stringr::str_pad(x[!is_null], width = 3, pad = "0")  # "1" -> "001"
+    x[is_null] <- "NULL"
+    x
+  }
+  
+  if ("JWAP" %in% names(census_data)) {
+    raw <- as.character(census_data$JWAP)
+    if (any(is_label_string(raw))) {
+      mins <- vapply(raw, label_time_midpoint_minutes, numeric(1))
+    } else {
+      dict <- get_var_dictionary(year, "JWAP")
+      if (nrow(dict) > 0) {
+        lab_map <- stats::setNames(dict$label, dict$code)
+        labs    <- unname(lab_map[ normalize_code(raw) ])
+        mins    <- vapply(labs, label_time_midpoint_minutes, numeric(1))
+      } else {
+        mins <- rep(NA_real_, length(raw))
+      }
+    }
+    census_data$JWAP_min <- mins
+    census_data$JWAP     <- vapply(mins, minutes_to_ampm, character(1))
+  }
+
+  if ("JWDP" %in% names(census_data)) {
+    raw <- as.character(census_data$JWDP)
+    if (any(is_label_string(raw))) {
+      mins <- vapply(raw, label_time_midpoint_minutes, numeric(1))
+    } else {
+      dict <- get_var_dictionary(year, "JWDP")
+      if (nrow(dict) > 0) {
+        lab_map <- stats::setNames(dict$label, dict$code)
+        labs    <- unname(lab_map[ normalize_code(raw) ])
+        mins    <- vapply(labs, label_time_midpoint_minutes, numeric(1))
+      } else {
+        mins <- rep(NA_real_, length(raw))
+      }
+    }
+    census_data$JWDP_min <- mins
+    census_data$JWDP     <- vapply(mins, minutes_to_ampm, character(1))
+  }
+  
+  # categoricals -> factors 
+  for (v in intersect(cat_var, names(census_data))) {
+    census_data[[v]] <- factor(census_data[[v]])
+  }
+  
   census_data |>
-    transform(AGEP = as.numeric(AGEP), GASP = as.numeric(GASP), GRPIP = 
-              as.numeric(GRPIP), JWMNP = as.numeric(JWMNP), 
-              JWAP = as.character(jwap_code[JWAP]), JWDP = 
-              as.character(jwdp_code[JWDP]))|>
     select(PWGTP, num_var, cat_var, geography) 
 }
 ```
@@ -77,8 +257,8 @@ Test function.
 
 ```{r}
 query_census_api(num_var = c("AGEP", "GASP", "JWAP", "JWDP", "JWMNP"))
-```
 
+```
 The following function is to use the `query_census_api` function to query the Census API for multiple survey years.
 
 ```{r}
@@ -96,6 +276,9 @@ query_multiyear_census <- function(census_years,
 combined_df
 }
 
+
 # Example
 df1 <- query_multiyear_census(census_years = c("2019", "2022"))
+
+
 ```
