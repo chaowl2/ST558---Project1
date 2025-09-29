@@ -8,6 +8,7 @@ editor: visual
 
 The following function is to query the Public Use Microdata Sample (PUMS) Census API.
 But first, we need to define the values for codes in the JWAP and JWDP variables.
+<<<<<<< HEAD
 
 
 ```{r}
@@ -20,6 +21,8 @@ library(httr)
 library(stringr)
 
 ```
+=======
+>>>>>>> cfd8e09bbd65f92f94518fa7dc21756e69bdfa84
 
 ```{r}
 URL_jwap_code <- "https://api.census.gov/data/2022/acs/acs1/pums/variables/JWAP.json"
@@ -258,10 +261,21 @@ Test function.
 ```{r}
 query_census_api(num_var = c("AGEP", "GASP", "JWAP", "JWDP", "JWMNP"))
 
+<<<<<<< HEAD
 ```
 The following function is to use the `query_census_api` function to query the Census API for multiple survey years.
 
 ```{r}
+<<<<<<< HEAD
+=======
+query_multiyear_census <- function() {
+  query_census_api(year = i)
+=======
+The following function is to use the `query_census_api` function to query the Census API for multiple survey years.
+>>>>>>> cfd8e09bbd65f92f94518fa7dc21756e69bdfa84
+
+```{r}
+>>>>>>> resolved merge conflict
 query_multiyear_census <- function(census_years, 
                                    num_var = "AGEP",
                                    cat_var = "SEX", 
@@ -275,10 +289,19 @@ query_multiyear_census <- function(census_years,
   }
 combined_df
 }
+<<<<<<< HEAD
 
 
 # Example
 df1 <- query_multiyear_census(census_years = c("2019", "2022"))
 
 
+=======
+<<<<<<< HEAD
+=======
+
+# Example
+df1 <- query_multiyear_census(census_years = c("2019", "2022"))
+>>>>>>> cfd8e09bbd65f92f94518fa7dc21756e69bdfa84
+>>>>>>> resolved merge conflict
 ```
