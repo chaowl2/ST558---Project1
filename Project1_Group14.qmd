@@ -271,21 +271,19 @@ query_multiyear_census <- function(census_years,
                                    geo_code = "37") {
   combined_data <- tibble()
   for (i in seq_along(census_years)){
-    df_i <- query_census_api(year = census_years[i])
+    df_i <- query_census_api(year = census_years[i], num_var, cat_var, geography, geo_code)
     df_i$survey_year <- census_years[[i]]
     combined_data <- rbind(combined_data, df_i)
   }
 
-
 # Adding class of 'census'
-
   class(combined_data) <- c("census", class(combined_data))
   combined_data
 }
 
 
 # Example
-df1 <- query_multiyear_census(census_years = c("2019", "2022"))
+df1 <- query_multiyear_census(census_years = c("2019", "2022"), num_var = c("AGEP", "GASP","GRPIP"))
 df1
 ```
 
@@ -294,6 +292,17 @@ df1
 ## Summarizing Function
 
 ```{r}
+summary.census <- function(my_tibble, num_var, cat_var){
+  
+for (i in seq_along(num_var)){
+    sample_mean_i <- sum(my_tibble[i] * my_tibble$PWGTP)/sum(my_tibble$PWGTP)
+  }
+  return(list(mean_num_var = sample_mean_i))
+}
+```
 
+Test summarizing function
+```{r}
+summary.census(df1, num_var = c("AGEP", )
 ```
 
