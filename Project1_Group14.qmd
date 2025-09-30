@@ -315,10 +315,27 @@ res_num <- list()
     }
   }
 
+res_cat <- list()
+for (v in cat_var) {
+  if (!v %in% names(my_tibble)) next
+  # checks if f and w are present, if not count is 0
+  f  <- as.character(my_tibble[[v]])
+  ok <- !is.na(f) & !is.na(w)
+  if (!any(ok)) {
+    res_cat[[v]] <- numeric(0)
+  } else {
+    # weighted counts by level 
+    counts <- tapply(w[ok], f[ok], sum, default = 0)
+    counts <- counts[order(names(counts))]
+    res_cat[[v]] <- as.numeric(counts)
+    names(res_cat[[v]]) <- names(counts)
+  }
+}
+
   
 
   # return as a named list
-  list(numeric = res_num)
+  list(numeric = res_num, categorical = res_cat)
 }
 ```
 
