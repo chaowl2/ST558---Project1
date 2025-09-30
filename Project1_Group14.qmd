@@ -269,13 +269,18 @@ query_multiyear_census <- function(census_years,
                                    cat_var = "SEX", 
                                    geography = "state",
                                    geo_code = "37") {
-  combined_df <- tibble()
+  combined_data <- tibble()
   for (i in seq_along(census_years)){
     df_i <- query_census_api(year = census_years[i])
     df_i$survey_year <- census_years[[i]]
-    combined_df <- rbind(combined_df, df_i)
+    combined_data <- rbind(combined_data, df_i)
   }
-combined_df
+
+
+# Adding class of 'census'
+
+  class(combined_data) <- c("census", class(combined_data))
+  combined_data
 }
 
 
@@ -283,3 +288,12 @@ combined_df
 df1 <- query_multiyear_census(census_years = c("2019", "2022"))
 df1
 ```
+
+
+
+## Summarizing Function
+
+```{r}
+
+```
+
