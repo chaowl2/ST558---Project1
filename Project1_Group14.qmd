@@ -346,24 +346,12 @@ summary.census(df1, num_var = c("AGEP", "GASP"), cat_var = c("FER","HHL","HISPEE
 
 ```{r}
 # function for plotting
-plot.census <- function(x, num_var, cat_var, ...) {
-  # coerce numeric and keep complete cases for value & weight
-  dat <- x
-  dat[[num_var]] <- suppressWarnings(as.numeric(dat[[num_var]]))
-  dat <- dat[!is.na(dat[[num_var]]) & !is.na(dat$PWGTP), , drop = FALSE]
-  if (!is.factor(dat[[cat_var]])) dat[[cat_var]] <- factor(dat[[cat_var]])
-
-  ggplot2::ggplot(
-    dat,
-    ggplot2::aes(
-      x      = .data[[cat_var]],
-      y      = .data[[num_var]],
-      weight = .data[["PWGTP"]]
-    )
-  ) +
-    ggplot2::geom_boxplot() +
-    ggplot2::labs(x = cat_var, y = num_var) +
-    ggplot2::theme_minimal()
+plot_census <- function(df, num_var, cat_var) {
+  library(ggplot2)
+  ggplot(df, aes_string(x = cat_var, y = num_var, weight = "PWGTP")) +
+    geom_boxplot() +
+    labs(x = cat_var, y = num_var) +
+    theme_minimal()
 }
 ```
 
@@ -373,6 +361,7 @@ Test plot
 plot.census(df1, num_var = "AGEP", cat_var = "SEX")
 ```
 
+<<<<<<< HEAD
 ```{r}
 # function for plotting
 plot.census <- function(x, num_var, cat_var) {
@@ -382,3 +371,9 @@ geom_boxplot()
 
 plot.census(df1, num_var = "AGEP", cat_var = "SCH")
 ```
+=======
+data <- query_census_api(num_var = c("AGEP","GASP","JWAP","JWDP","JWMNP"))
+plot_census(data, "AGEP", "SEX")
+
+```
+>>>>>>> updated plot function, need to test
