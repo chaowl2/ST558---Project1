@@ -294,19 +294,31 @@ head(df1, 10)
 ```{r}
 summary.census <- function(my_tibble, num_var, cat_var){
   
-  results <- list()
-for (i in seq_along(num_var)){
-    mean_i <- sum(my_tibble[i] * my_tibble$PWGTP)/sum(my_tibble$PWGTP)
-    sd_i <- sqrt(sum(my_tibble[i]^2*my_tibble$PWGTP)/sum(my_tibble$PWGTP)-mean_i^2)
-    results <- c(results, mean_i, sd_i)
+ if (!"PWGTP" %in% names(my_tibble)) stop("PWGTP weight column is missing.")
+  w <- suppressWarnings(as.numeric(my_tibble$PWGTP))
+  
+res_num <- list()
+  for (v in num_var) {
+    if (!v %in% names(my_tibble)) next
+    # checks if x and w are present, if not present, then assigns na to mean and sd
+    x  <- suppressWarnings(as.numeric(my_tibble[[v]]))
+    ok <- !is.na(x) & !is.na(w)
+    if (!any(ok)) {
+      res_num[[v]] <- c(mean = NA_real_, sd = NA_real_) # set to na if 
+    # if present then calculates the mean and sd
+    } else {
+      sw   <- sum(w[ok])
+      m    <- sum(w[ok] * x[ok]) / sw
+      ex2  <- sum(w[ok] * x[ok]^2) / sw
+      sd_w <- sqrt(max(0, ex2 - m^2))
+      res_num[[v]] <- c(mean = m, sd = sd_w)
     }
-for (i in seq_along(cat_var)){
-    
-    count_i <- 
-    results <- c(results, count_i)
-    }
-    
-  return(results)
+  }
+
+  
+
+  # return as a named list
+  list(numeric = res_num)
 }
 ```
 
