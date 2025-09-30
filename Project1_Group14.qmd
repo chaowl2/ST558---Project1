@@ -6,9 +6,7 @@ editor: visual
 
 ## Query API Function
 
-The following function is to query the Public Use Microdata Sample (PUMS) Census API.
-But first, we need to define the values for codes in the JWAP and JWDP variables.
-
+The following function is to query the Public Use Microdata Sample (PUMS) Census API. But first, we need to define the values for codes in the JWAP and JWDP variables.
 
 ```{r}
 library(DBI)
@@ -21,7 +19,6 @@ library(stringr)
 library(ggplot2)
 
 ```
-
 
 ```{r}
 URL_jwap_code <- "https://api.census.gov/data/2022/acs/acs1/pums/variables/JWAP.json"
@@ -262,6 +259,7 @@ query_census_api(num_var = c("AGEP", "GASP", "JWAP", "JWDP", "JWMNP"))
 
 
 ```
+
 The following function is to use the `query_census_api` function to query the Census API for multiple survey years.
 
 ```{r}
@@ -283,12 +281,10 @@ query_multiyear_census <- function(census_years,
 }
 
 
-# Example
+# Example to create tibble for summarizing
 df1 <- query_multiyear_census(census_years = c("2019", "2022"), num_var = c("AGEP", "GASP","GRPIP"), cat_var = c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX"))
 head(df1, 10)
 ```
-
-
 
 ## Summarizing Function
 
@@ -341,9 +337,13 @@ for (v in cat_var) {
 ```
 
 Test summarizing function
+
 ```{r}
 summary.census(df1, num_var = c("AGEP", "GASP"), cat_var = c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX"))
 ```
+
+## Plotting Function
+
 ```{r}
 # function for plotting
 plot.census <- function(x, num_var, cat_var, ...) {
@@ -365,16 +365,20 @@ plot.census <- function(x, num_var, cat_var, ...) {
     ggplot2::labs(x = cat_var, y = num_var) +
     ggplot2::theme_minimal()
 }
-
 ```
 
 Test plot
 
 ```{r}
+plot.census(df1, num_var = "AGEP", cat_var = "SEX")
+```
 
-data = query_census_api(num_var = c("AGEP", "GASP", "JWAP", "JWDP", "JWMNP"))
+```{r}
+# function for plotting
+plot.census <- function(x, num_var, cat_var) {
+  ggplot(x, aes(x = get(cat_var), y = get(num_var), weight = PWGTP)) +
+geom_boxplot()
+}
 
-class(data) <- c("census", class(data))
-
-plot(data, num_var = "AGEP", cat_var = "SEX")
+plot.census(df1, num_var = "AGEP", cat_var = "SCH")
 ```
