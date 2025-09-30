@@ -283,8 +283,8 @@ query_multiyear_census <- function(census_years,
 
 
 # Example
-df1 <- query_multiyear_census(census_years = c("2019", "2022"), num_var = c("AGEP", "GASP","GRPIP"))
-df1
+df1 <- query_multiyear_census(census_years = c("2019", "2022"), num_var = c("AGEP", "GASP","GRPIP"), cat_var = c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX"))
+head(df1, 10)
 ```
 
 
@@ -294,15 +294,24 @@ df1
 ```{r}
 summary.census <- function(my_tibble, num_var, cat_var){
   
+  results <- list()
 for (i in seq_along(num_var)){
-    sample_mean_i <- sum(my_tibble[i] * my_tibble$PWGTP)/sum(my_tibble$PWGTP)
-  }
-  return(list(mean_num_var = sample_mean_i))
+    mean_i <- sum(my_tibble[i] * my_tibble$PWGTP)/sum(my_tibble$PWGTP)
+    sd_i <- sqrt(sum(my_tibble[i]^2*my_tibble$PWGTP)/sum(my_tibble$PWGTP)-mean_i^2)
+    results <- c(results, mean_i, sd_i)
+    }
+for (i in seq_along(cat_var)){
+    
+    count_i <- 
+    results <- c(results, count_i)
+    }
+    
+  return(results)
 }
 ```
 
 Test summarizing function
 ```{r}
-summary.census(df1, num_var = c("AGEP", )
+summary.census(df1, num_var = c("AGEP", "GASP"), cat_var = c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX"))
 ```
 
