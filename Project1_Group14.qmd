@@ -354,22 +354,6 @@ plot_census <- function(df, num_var, cat_var) {
     theme_minimal()
 }
 ```
-
-Test plot
-
-```{r}
-plot.census(df1, num_var = "AGEP", cat_var = "SEX")
-```
-
-
-```{r}
-# function for plotting
-plot.census <- function(x, num_var, cat_var) {
-  ggplot(x, aes(x = get(cat_var), y = get(num_var), weight = PWGTP)) +
-geom_boxplot()
-}
-
-```
 Test Plot
 ```{r}
 data <- query_census_api(num_var = c("AGEP","GASP","JWAP","JWDP","JWMNP"))
