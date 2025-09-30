@@ -349,7 +349,7 @@ summary.census(df1, num_var = c("AGEP", "GASP"), cat_var = c("FER","HHL","HISPEE
 plot_census <- function(df, num_var, cat_var) {
   library(ggplot2)
   ggplot(df, aes_string(x = cat_var, y = num_var, weight = "PWGTP")) +
-    geom_boxplot() + 
+    geom_boxplot() +
     labs(x = cat_var, y = num_var) +
     theme_minimal()
 }
@@ -361,7 +361,7 @@ Test plot
 plot.census(df1, num_var = "AGEP", cat_var = "SEX")
 ```
 
-<<<<<<< HEAD
+
 ```{r}
 # function for plotting
 plot.census <- function(x, num_var, cat_var) {
@@ -369,11 +369,10 @@ plot.census <- function(x, num_var, cat_var) {
 geom_boxplot()
 }
 
-plot.census(df1, num_var = "AGEP", cat_var = "SCH")
 ```
-=======
+Test Plot
+```{r}
 data <- query_census_api(num_var = c("AGEP","GASP","JWAP","JWDP","JWMNP"))
 plot_census(data, "AGEP", "SEX")
 
 ```
->>>>>>> updated plot function, need to test
