@@ -349,7 +349,7 @@ summary.census(df1, num_var = c("AGEP", "GASP"), cat_var = c("FER","HHL","HISPEE
 plot_census <- function(df, num_var, cat_var) {
   library(ggplot2)
   ggplot(df, aes_string(x = cat_var, y = num_var, weight = "PWGTP")) +
-    geom_boxplot() +
+    geom_boxplot() + 
     labs(x = cat_var, y = num_var) +
     theme_minimal()
 }
