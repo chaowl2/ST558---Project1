@@ -99,8 +99,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><em>Authored by Derek Chao and Kim Costello</em></p>
 <section id="query-api-function" class="level2">
 <h2 class="anchored" data-anchor-id="query-api-function">Query API Function</h2>
-<p>The Public Use Microdata Sample from the US Census Bureau contains records about demographics and housing for individuals in the US. Access to these PUMS files is located at Census.gov. In the following sections below, functions are generated to query the census API to obtain specific data related to the 2010 - 2022 survey years.</p>
-<p>Access is needed to the following packages to successfully run the function.</p>
+<p>The Public Use Microdata Sample from the US Census Bureau contains records about demographics and housing for individuals in the US. Access to these PUMS files is located at Census.gov. In the following sections below, functions are generated to query the census API to obtain specific data related to the 2010 - 2022 survey years, provide summaries, and generate plots.</p>
+<p>Access is needed to the following packages to successfully run the functions.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DBI)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -134,7 +134,7 @@ Attaching package: 'lubridate'</code></pre>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>In the code below, the census API is queried to return the code values for two specific variables, JWAP and JWDP. This is one way to be able to reference the code values later on. However, a more efficient way is provided in the function below to create a variable dictionary, that can look up code values for any specified variable.</p>
+<p>In the code below, the census API is queried to return the code values for two specific variables, JWAP and JWDP. This is one way to be able to reference the code values later on. However, a more efficient way is provided in the function below to create a variable dictionary that can look up code values for any specified variable.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>URL_jwap_code <span class="ot">&lt;-</span> <span class="st">"https://api.census.gov/data/2022/acs/acs1/pums/variables/JWAP.json"</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>jwap_code_returns <span class="ot">&lt;-</span> httr<span class="sc">::</span><span class="fu">GET</span>(URL_jwap_code)</span>
@@ -467,7 +467,12 @@ See &lt;https://tidyselect.r-lib.org/reference/faq-external-vector.html&gt;.</co
 <section id="summarizing-function" class="level2">
 <h2 class="anchored" data-anchor-id="summarizing-function">Summarizing Function</h2>
 <p>The following function can be used to summarize the data returned from the census API.</p>
-<p>Features of this function include: - Produces means and standard deviations for numeric variables (other than PWGTP). - Produces counts for categorical variables - Returns values as a list</p>
+<p>Features of this function include:</p>
+<ul>
+<li><p>Produces means and standard deviations for numeric variables (other than PWGTP).</p></li>
+<li><p>Produces counts for categorical variables</p></li>
+<li><p>Returns values as a list</p></li>
+</ul>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>summary.census <span class="ot">&lt;-</span> <span class="cf">function</span>(my_tibble, num_var, cat_var){</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  </span>
@@ -568,7 +573,8 @@ $categorical$SEX
 </section>
 <section id="plotting-function" class="level2">
 <h2 class="anchored" data-anchor-id="plotting-function">Plotting Function</h2>
-<p>The following function can be used to generate a boxplot for a census class tibble, allowing the user to select the desired numeric variable and categorical variable. NOTE: This function accounts for the weights (PWGTP) when generating the plots.</p>
+<p>The following function can be used to generate a boxplot for a census class tibble, allowing the user to select the desired numeric variable and categorical variable.</p>
+<p>NOTE: This function accounts for the weights (PWGTP) when generating the plots.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># function for plotting</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>plot_census <span class="ot">&lt;-</span> <span class="cf">function</span>(df, num_var, cat_var) {</span>
