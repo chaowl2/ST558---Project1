@@ -1,5 +1,5 @@
 ---
-title: "Project1_Group14"
+title: "Project1 Group14"
 format: html
 editor: visual
 ---
@@ -248,7 +248,11 @@ minutes_to_ampm <- function(m) {
   }
   
   census_data |>
-    select(PWGTP, num_var, cat_var, geography) 
+    select(PWGTP, num_var, cat_var, geography)
+  
+  # Adding class of 'census'
+  class(census_data) <- c("census", class(census_data))
+  census_data
 }
 ```
 
@@ -354,9 +358,60 @@ plot_census <- function(df, num_var, cat_var) {
     theme_minimal()
 }
 ```
+
 Test Plot
+
 ```{r}
 data <- query_census_api(num_var = c("AGEP","GASP","JWAP","JWDP","JWMNP"))
 plot_census(data, "AGEP", "SEX")
 
 ```
+
+
+
+## Investigating the Data 
+
+We are interested in investigating the difference in age and those who gave birth to a child within the past 12 months during the 2010 and 2022 census years in North Carolina (state code 37). 
+
+Since we want to plot the years separately, the following code will query the API for each year to create two separate datasets. 
+
+```{r}
+census_2010 <- query_census_api(year = 2010, num_var = "AGEP", cat_var = "FER") 
+census_2022 <- query_census_api(num_var = "AGEP", cat_var = "FER")
+```
+
+Now, let's see these variables summarized by mean and standard deviation for age, and the count for those who gave birth to a child within the past 12 months. 
+
+```{r}
+#For the 2010 census
+summary.census(census_2010, num_var = "AGEP", cat_var = "FER")
+```
+```{r}
+#For the 2022 census
+summary.census(census_2022, num_var = "AGEP", cat_var = "FER")
+```
+
+In general, the average age in 2010 was 37.3 years old, and the average age in 2019 was slightly higher at 39.6 years old. 
+
+For the number of those who gave birth a child within 12 months, the codes are as follows: 
+-   0 : N/A, which means individuals were male, <15 years old, or >15 years old.
+-   1 : Did have a child in the past 12 months.
+-   2 : Did not have a child in the past 12 months. 
+
+The count for those who did have a child in the past 12 months declined in 2022, from 133,976 in 2010 to 127,864 in 2022. There are numerous factors that could contribute to the decline in births, but one could speculate that social and economic factors, specifically related to the COVID-19 pandemic, could attribute to this decline. 
+
+Now to visually see the summaries for those who gave birth in the past 12 months, as it relates to age, for each year.  
+
+```{r}
+#Plot for 2010 census
+plot_census(census_2010, num_var = "AGEP", cat_var = "FER")
+
+#Plot of 2022 census
+plot_census(census_2022, num_var = "AGEP", cat_var = "FER")
+```
+
+ Visually, the data between years 2010 and 2022 do not appear to be significantly different. 
+ However,there is a slight increase in the average age from 2010 to 2022 in those who gave birth in the past 12 months (FER code 1). 
+ The minimum age and maximum age of those who gave birth within the past 12 months for both years appear to be approximately 15 and 50 years old, respectively, with some possible outliers around age 50 (right above the max). 
+
+Overall, the functions to query the census API, summarize the numerical and categorical variables, and plot them, provide ways to transform raw data from the PUMS Census into understanding, insight, and knowledge. 
