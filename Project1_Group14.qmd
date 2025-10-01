@@ -4,10 +4,14 @@ format: html
 editor: visual
 ---
 
+*Authored by Derek Chao and Kim Costello*
+
 ## Query API Function
 
-The following function is to query the Public Use Microdata Sample (PUMS) Census API. But first, we need to define the values for codes in the JWAP and JWDP variables.
+The Public Use Microdata Sample from the US Census Bureau contains records about demographics and housing for individuals in the US. Access to these PUMS files is located at Census.gov. In the following sections below, functions are generated to query the census API to obtain specific data related to the 2010 - 2022 survey years. 
 
+
+Access is needed to the following packages to successfully run the function. 
 ```{r}
 library(DBI)
 library(dplyr)
@@ -20,6 +24,8 @@ library(ggplot2)
 
 ```
 
+
+In the code below, the census API is queried to return the code values for two specific variables, JWAP and JWDP. This is one way to be able to reference the code values later on. However, a more efficient way is provided in the function below to create a variable dictionary, that can look up code values for any specified variable. 
 ```{r}
 URL_jwap_code <- "https://api.census.gov/data/2022/acs/acs1/pums/variables/JWAP.json"
 jwap_code_returns <- httr::GET(URL_jwap_code)
@@ -33,21 +39,25 @@ jwdp_code <- as.list(parsed_jwdp_code$values$item)
 
 ```
 
+The following function is to query the Public Use Microdata Sample (PUMS) Census API.
+
 Features of the function include:
 
 -   Allows user to choose the year of survey (2022 as default).
 
--   Allows the user to specify the numeric variables (AGEP and PWGTP as default, with PWGTP always being returned).
+-   Allows the user to specify the numeric variables (AGEP and PWGTP as default, with PWGTP always being returned), with restriction of at least one numeric variable specified other than PWGTP. 
 
--   Allows the user to specify the categorical variables (SEX as default).
+-   Allows the user to specify the categorical variables (SEX as default), with restriction of at least one categorical variable specified.
 
--   Allows the user to specify the geography level (state, division, region with state being the default) and the geography code (37 is the current default).
+-   Allows the user to specify the geography level (state, division, or region with state being the default) and the geography code (37 is the current default).
 
--   Checks that a valid value was give for the year (between 2010 and 2022).
+-   Checks that a valid value was given for the year (between 2010 and 2022).
 
 -   Checks that the numeric and categorical variables specified are in the list of variables of interest.
 
 -   Checks that a valid geography level was given.
+
+-   Returns AGEP, GASP, GRPIP, ad JWMNP as numeric variables, JWAP and JWDP as time values, and categorical variables as factors. 
 
 ```{r}
 # Write a function to query the API that allows the user to change the following items
@@ -256,7 +266,7 @@ minutes_to_ampm <- function(m) {
 }
 ```
 
-Test function.
+This is a test for the `query_census_api` function.
 
 ```{r}
 query_census_api(num_var = c("AGEP", "GASP", "JWAP", "JWDP", "JWMNP"))
@@ -284,13 +294,25 @@ query_multiyear_census <- function(census_years,
   combined_data
 }
 
+```
 
-# Example to create tibble for summarizing
+The following is to test the `query_multiyear_census` function. 
+
+```{r}
+# Test function and create tibble for use in testing the summarizing function
 df1 <- query_multiyear_census(census_years = c("2019", "2022"), num_var = c("AGEP", "GASP","GRPIP"), cat_var = c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX"))
 head(df1, 10)
 ```
 
+
 ## Summarizing Function
+
+The following function can be used to summarize the data returned from the census API. 
+
+Features of this function include: 
+-   Produces means and standard deviations for numeric variables (other than PWGTP). 
+-   Produces counts for categorical variables
+-   Returns values as a list
 
 ```{r}
 summary.census <- function(my_tibble, num_var, cat_var){
@@ -340,13 +362,16 @@ for (v in cat_var) {
 }
 ```
 
-Test summarizing function
+This is to test the `summary_census` function, using the previously saved tibble, `df1`. 
 
 ```{r}
 summary.census(df1, num_var = c("AGEP", "GASP"), cat_var = c("FER","HHL","HISPEED","JWTRNS","SCH","SCHL","SEX"))
 ```
 
 ## Plotting Function
+
+The following function can be used to generate a boxplot for a census class tibble, allowing the user to select the desired numeric variable and categorical variable.
+NOTE: This function accounts for the weights (PWGTP) when generating the plots. 
 
 ```{r}
 # function for plotting
@@ -359,7 +384,7 @@ plot_census <- function(df, num_var, cat_var) {
 }
 ```
 
-Test Plot
+This is to test the `plot_census` function. 
 
 ```{r}
 data <- query_census_api(num_var = c("AGEP","GASP","JWAP","JWDP","JWMNP"))
@@ -368,39 +393,42 @@ plot_census(data, "AGEP", "SEX")
 ```
 
 
+## Investigating the Data
 
-## Investigating the Data 
+We are interested in investigating the difference in age and those who gave birth to a child within the past 12 months during the 2010 and 2022 census years in North Carolina (state code 37).
 
-We are interested in investigating the difference in age and those who gave birth to a child within the past 12 months during the 2010 and 2022 census years in North Carolina (state code 37). 
-
-Since we want to plot the years separately, the following code will query the API for each year to create two separate datasets. 
+Since we want to plot the years separately, the following code will query the API for each year to create two separate datasets.
 
 ```{r}
 census_2010 <- query_census_api(year = 2010, num_var = "AGEP", cat_var = "FER") 
 census_2022 <- query_census_api(num_var = "AGEP", cat_var = "FER")
 ```
 
-Now, let's see these variables summarized by mean and standard deviation for age, and the count for those who gave birth to a child within the past 12 months. 
+Now, let's see these variables summarized by mean and standard deviation for age, and the count for those who gave birth to a child within the past 12 months.
 
 ```{r}
 #For the 2010 census
 summary.census(census_2010, num_var = "AGEP", cat_var = "FER")
 ```
+
 ```{r}
 #For the 2022 census
 summary.census(census_2022, num_var = "AGEP", cat_var = "FER")
 ```
 
-In general, the average age in 2010 was 37.3 years old, and the average age in 2019 was slightly higher at 39.6 years old. 
+In general, the average age in 2010 was 37.3 years old, and the average age in 2019 was slightly higher at 39.6 years old.
 
-For the number of those who gave birth a child within 12 months, the codes are as follows: 
--   0 : N/A, which means individuals were male, <15 years old, or >15 years old.
--   1 : Did have a child in the past 12 months.
--   2 : Did not have a child in the past 12 months. 
+For the number of those who gave birth a child within 12 months, the codes are as follows:
 
-The count for those who did have a child in the past 12 months declined in 2022, from 133,976 in 2010 to 127,864 in 2022. There are numerous factors that could contribute to the decline in births, but one could speculate that social and economic factors, specifically related to the COVID-19 pandemic, could attribute to this decline. 
+-   0 : N/A, which means individuals were male, less than 15 years old, or greater than 50 years old.
 
-Now to visually see the summaries for those who gave birth in the past 12 months, as it relates to age, for each year.  
+-   1 : Did have a child in the past 12 months. 
+
+-   2 : Did not have a child in the past 12 months.
+
+The count for those who did have a child in the past 12 months declined in 2022, from 133,976 in 2010 to 127,864 in 2022. There are numerous factors that could contribute to the decline in births, but one could speculate that social and economic factors, specifically related to the COVID-19 pandemic, could attribute to this decline.
+
+Now to visually see the summaries for those who gave birth in the past 12 months, as it relates to age, for each year.
 
 ```{r}
 #Plot for 2010 census
@@ -410,8 +438,6 @@ plot_census(census_2010, num_var = "AGEP", cat_var = "FER")
 plot_census(census_2022, num_var = "AGEP", cat_var = "FER")
 ```
 
- Visually, the data between years 2010 and 2022 do not appear to be significantly different. 
- However,there is a slight increase in the average age from 2010 to 2022 in those who gave birth in the past 12 months (FER code 1). 
- The minimum age and maximum age of those who gave birth within the past 12 months for both years appear to be approximately 15 and 50 years old, respectively, with some possible outliers around age 50 (right above the max). 
+Visually, the data between years 2010 and 2022 do not appear to be significantly different. However,there is a slight increase in the average age from 2010 to 2022 in those who gave birth in the past 12 months (FER code 1). The minimum age and maximum age of those who gave birth within the past 12 months for both years appear to be approximately 15 and 50 years old, respectively, with some possible outliers around age 50 (right above the max).
 
-Overall, the functions to query the census API, summarize the numerical and categorical variables, and plot them, provide ways to transform raw data from the PUMS Census into understanding, insight, and knowledge. 
+Overall, the functions to query the census API, summarize the numeric and categorical variables, and plot them, provide ways to transform raw data from the PUMS Census into understanding, insight, and knowledge.
