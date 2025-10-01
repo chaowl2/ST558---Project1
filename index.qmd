@@ -1,0 +1,35 @@
+---
+title: "Project 1"
+format:
+  html:
+    theme: cosmo
+    toc: false
+editor: visual
+---
+
+## 
+
+\# Welcome
+
+
+This is the homepage for our project website.
+
+
+\## Open the report
+
+-
+
+\*\*Report:\*\* \[Project1_Group14.html\](Project1_Group14.html)
+
+
+\<div style="margin-top:0.5rem"\>
+
+\<a class="btn btn-primary" href="Project1_Group14.html"\>Open Project1_Group14\</a\>
+
+\</div\>
+
+
+\## Notes
+
+- The report link points to the rendered HTML in \*\*docs/\*\* (created by \`quarto render\`).
+- If the link 404s, render again and commit/push the files in \*\*docs/\*\*.
