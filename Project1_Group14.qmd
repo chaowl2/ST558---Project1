@@ -411,7 +411,7 @@ Now, let's see these variables summarized by mean and standard deviation for age
 ```{r}
 #For the 2010 census
 summary.census(census_2010, num_var = "AGEP", cat_var = "FER")
-```
+``` 
 
 ```{r}
 #For the 2022 census
